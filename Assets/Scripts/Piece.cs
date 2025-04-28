@@ -10,6 +10,7 @@ public class Piece : MonoBehaviour, IBeginDragHandler, IDragHandler, IEndDragHan
     private RectTransform rectTransform;
     private CanvasGroup canvasGroup;
     private Vector2 originalPosition;
+    private Transform originalParent;
 
     private void Awake()
     {
@@ -20,6 +21,7 @@ public class Piece : MonoBehaviour, IBeginDragHandler, IDragHandler, IEndDragHan
     public void OnBeginDrag(PointerEventData eventData)
     {
         originalPosition = rectTransform.anchoredPosition;
+        originalParent = transform.parent;
         canvasGroup.blocksRaycasts = false;
     }
 
@@ -31,6 +33,11 @@ public class Piece : MonoBehaviour, IBeginDragHandler, IDragHandler, IEndDragHan
     public void OnEndDrag(PointerEventData eventData)
     {
         canvasGroup.blocksRaycasts = true;
-        // Snap or revert handled by DropSlot
+
+        // If still under original parent (meaning NOT dropped into a slot), reset
+        if (transform.parent == originalParent)
+        {
+            rectTransform.anchoredPosition = originalPosition;
+        }
     }
 }

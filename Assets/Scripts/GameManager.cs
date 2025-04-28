@@ -138,7 +138,7 @@ public class GameManager : MonoBehaviour
 
     private void SpawnGridSlots(int rows, int cols)
     {
-        for (int y = 0; y < rows; y++)
+        for (int y = rows - 1; y >= 0; y--) // start from top row
         {
             for (int x = 0; x < cols; x++)
             {
@@ -149,6 +149,7 @@ public class GameManager : MonoBehaviour
             }
         }
     }
+
 
     public void AddPenalty()
     {
@@ -239,6 +240,21 @@ public class GameManager : MonoBehaviour
                     allCorrect = false;
                     break;
                 }
+
+                Piece piece = slot.GetComponentInChildren<Piece>();
+                DropSlot dropSlot = slot.GetComponent<DropSlot>();
+
+                if (piece == null || dropSlot == null)
+                {
+                    allCorrect = false;
+                    break;
+                }
+
+                if (piece.correctRow != dropSlot.slotRow || piece.correctCol != dropSlot.slotCol)
+                {
+                    allCorrect = false;
+                    break;
+                }
             }
 
             if (allCorrect)
@@ -252,5 +268,6 @@ public class GameManager : MonoBehaviour
             }
         }
     }
+
 
 }

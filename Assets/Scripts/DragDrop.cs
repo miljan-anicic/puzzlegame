@@ -21,6 +21,13 @@ public class DropSlot : MonoBehaviour, IDropHandler
 
         if (piece != null)
         {
+            //  Check if slot already has a child (piece)
+            if (transform.childCount > 0)
+            {
+                Debug.Log("Slot already occupied!");
+                return; // Do nothing, don't allow drop
+            }
+
             RectTransform pieceRect = piece.GetComponent<RectTransform>();
             RectTransform slotRect = GetComponent<RectTransform>();
 
@@ -56,6 +63,7 @@ public class DropSlot : MonoBehaviour, IDropHandler
             }
         }
     }
+
 
     private IEnumerator Pulse(RectTransform pieceRect, Color flashColor)
     {

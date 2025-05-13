@@ -1,0 +1,44 @@
+{
+    "items": [
+        {
+            "key": "easy_text",
+            "value": "Lako: Točna mjesta svijetle zeleno, pogrešna crveno. Pritisni razmaknicu za početak."
+        },
+        {
+            "key": "medium_text",
+            "value": "Srednje: Samo pogrešni potezi su označeni. Pritisni razmaknicu za početak."
+        },
+        {
+            "key": "hard_text",
+            "value": "Teško: Nema vizualne povratne informacije. Pametno koristi rotacije. Pritisni razmaknicu za početak."
+        },
+        {
+            "key": "game_completed",
+            "value": "Igra završena!"
+        },
+        {
+            "key": "final_time",
+            "value": "Završno vrijeme: "
+        },
+        {
+            "key": "penalty_time",
+            "value": "Kazna: {0:0.000} sekundi"
+        },
+        {
+            "key": "title_text",
+            "value": "Moja Puzzle Igra"
+        },
+        {
+            "key": "easy_btn",
+            "value": "Lako"
+        },
+        {
+            "key": "medium_btn",
+            "value": "Srednje"
+        },
+        {
+            "key": "hard_btn",
+            "value": "Teško"
+        }
+    ]
+}

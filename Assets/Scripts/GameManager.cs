@@ -3,13 +3,27 @@ using UnityEngine.UI;
 using TMPro;
 using System.Collections.Generic;
 
-public class GameManager : MonoBehaviour
+public class GameManager : MonoBehaviour , ILocalizable
 {
     public GameObject menuCanvas;
     public GameObject gameCanvas;
     public GameObject handPanel;
     public GameObject tutorialPanel;
     public TextMeshProUGUI tutorialText;
+    public TextMeshProUGUI titleText;
+    public TextMeshProUGUI easyButtonText;
+    public TextMeshProUGUI mediumButtonText;
+    public TextMeshProUGUI hardButtonText;
+
+    public Button resetProgressButton;
+    public Button easyButton;
+    public Button mediumButton;
+    public Button hardButton;
+
+    private bool showWinScreen = false;
+
+
+    public int correctCount = 0;
 
     public GameObject slotPrefab;
     public Transform gridPanel;
@@ -43,24 +57,59 @@ public class GameManager : MonoBehaviour
 
         handLayout = handPanel.GetComponent<GridLayoutGroup>();
         gridLayout = gridPanel.GetComponent<GridLayoutGroup>();
+        UpdateText();
+
+        resetProgressButton.onClick.AddListener(ResetProgress);
+        LoadProgress();
+        UpdateButtonStates();
+    }
+    private void ResetProgress()
+    {
+        PlayerPrefs.DeleteKey("EasyComplete");
+        PlayerPrefs.DeleteKey("MediumComplete");
+        UpdateButtonStates();
     }
 
-    void Update()
+    private void LoadProgress()
     {
-        if (tutorialPanel.activeSelf && Input.GetKeyDown(KeyCode.Space))
+        bool easyDone = PlayerPrefs.GetInt("EasyComplete", 0) == 1;
+        bool mediumDone = PlayerPrefs.GetInt("MediumComplete", 0) == 1;
+
+        mediumButton.interactable = easyDone;
+        hardButton.interactable = mediumDone;
+    }
+
+    private void UpdateButtonStates()
+    {
+        LoadProgress();
+    }
+
+
+void Update()
+{
+    if (tutorialPanel.activeSelf && Input.GetKeyDown(KeyCode.Space))
+    {
+        if (showWinScreen)
+        {
+            showWinScreen = false;
+            tutorialPanel.SetActive(false);
+            menuCanvas.SetActive(true);
+        }
+        else
         {
             tutorialPanel.SetActive(false);
             StartGame();
         }
-
-        if (isGameRunning)
-        {
-            elapsedTime += Time.deltaTime;
-            timerText.text = FormatTime(elapsedTime);
-
-            CheckGameEnd();
-        }
     }
+
+    if (isGameRunning)
+    {
+        elapsedTime += Time.deltaTime;
+        timerText.text = FormatTime(elapsedTime);
+        CheckGameEnd();
+    }
+}
+
 
     private void StartGame()
     {
@@ -99,11 +148,11 @@ public class GameManager : MonoBehaviour
         tutorialPanel.SetActive(true);
 
         if (showCorrect && showIncorrect)
-            tutorialText.text = "Easy: Correct slots light up green, wrong ones red. Press Space to start.";
+            tutorialText.text = LocalizationManager.Instance.GetText("easy_text");
         else if (!showCorrect && showIncorrect)
-            tutorialText.text = "Medium: Only wrong moves are highlighted. Press Space to begin.";
+            tutorialText.text = LocalizationManager.Instance.GetText("medium_text");
         else if (!showCorrect && !showIncorrect)
-            tutorialText.text = "Hard: No visual feedback. Use rotations wisely. Press Space to start.";
+            tutorialText.text = LocalizationManager.Instance.GetText("hard_text");
 
         gridRows = rows;
         gridCols = cols;
@@ -112,7 +161,10 @@ public class GameManager : MonoBehaviour
 
         ClearGrid();
 
-        Sprite selectedImage = new[] { img1, img2, img3 }[Random.Range(0, 3)];
+        Sprite selectedImage = img1;
+        if (rows == 4) selectedImage = img2;
+        else if (rows == 5) selectedImage = img3;
+
         Sprite[,] slicedPieces = SliceImage(selectedImage, rows, cols);
         SpawnGridSlots(rows, cols);
         SpawnPieces(slicedPieces);
@@ -138,16 +190,17 @@ public class GameManager : MonoBehaviour
 
     private void SpawnGridSlots(int rows, int cols)
     {
-        for (int y = rows - 1; y >= 0; y--) // start from top row
+        for (int y = 0; y < rows; y++) // build from bottom to top
         {
             for (int x = 0; x < cols; x++)
             {
                 GameObject slot = Instantiate(slotPrefab, gridPanel);
                 DropSlot dropSlot = slot.GetComponent<DropSlot>();
-                dropSlot.slotRow = y;
+                dropSlot.slotRow = rows - 1 - y;
                 dropSlot.slotCol = x;
             }
         }
+
     }
 
 
@@ -191,10 +244,12 @@ public class GameManager : MonoBehaviour
         for (int y = 0; y < rows; y++)
             for (int x = 0; x < cols; x++)
             {
-                Rect rect = new Rect(x * pieceWidth, y * pieceHeight, pieceWidth, pieceHeight);
+                int flippedY = rows - 1 - y;
+                Rect rect = new Rect(x * pieceWidth, flippedY * pieceHeight, pieceWidth, pieceHeight);
                 Vector2 pivot = new Vector2(0.5f, 0.5f);
                 pieces[y, x] = Sprite.Create(texture, rect, pivot);
             }
+
         return pieces;
     }
 
@@ -222,52 +277,130 @@ public class GameManager : MonoBehaviour
             GameObject piece = Instantiate(piecePrefab, handPanel.transform);
             piece.GetComponent<Image>().sprite = entry.sprite;
             Piece pieceScript = piece.GetComponent<Piece>();
-            pieceScript.correctRow = entry.row;
+            pieceScript.correctRow = gridRows - 1 - entry.row;
+
+
             pieceScript.correctCol = entry.col;
         }
     }
 
-    private void CheckGameEnd()
+    public void UpdateText()
     {
-        if (handPanel.transform.childCount == 0)
-        {
-            bool allCorrect = true;
+        if (titleText != null)
+            titleText.text = LocalizationManager.Instance.GetText("title_text");
+        if (easyButtonText != null)
+            easyButtonText.text = LocalizationManager.Instance.GetText("easy_btn");
+        if (mediumButtonText != null)
+            mediumButtonText.text = LocalizationManager.Instance.GetText("medium_btn");
+        if (hardButtonText != null)
+            hardButtonText.text = LocalizationManager.Instance.GetText("hard_btn");
 
-            foreach (Transform slot in gridPanel.transform)
-            {
-                if (slot.childCount == 0)
-                {
-                    allCorrect = false;
-                    break;
-                }
+        if (!tutorialPanel.activeSelf) return;
 
-                Piece piece = slot.GetComponentInChildren<Piece>();
-                DropSlot dropSlot = slot.GetComponent<DropSlot>();
-
-                if (piece == null || dropSlot == null)
-                {
-                    allCorrect = false;
-                    break;
-                }
-
-                if (piece.correctRow != dropSlot.slotRow || piece.correctCol != dropSlot.slotCol)
-                {
-                    allCorrect = false;
-                    break;
-                }
-            }
-
-            if (allCorrect)
-            {
-                isGameRunning = false;
-                Debug.Log("Game Completed!");
-                Debug.Log("Final Time: " + FormatTime(elapsedTime));
-                Debug.Log($"Penalty Time: {penaltyTimeTotal:0.000} seconds");
-                timerText.text += $"\nPenalty: {penaltyTimeTotal:0.000} seconds";
-                // TODO: Show Win Panel
-            }
-        }
+        if (showCorrectFeedback)
+            tutorialText.text = LocalizationManager.Instance.GetText("easy_text");
+        else if (!showCorrectFeedback && penaltyPerMistake <= 1f)
+            tutorialText.text = LocalizationManager.Instance.GetText("medium_text");
+        else
+            tutorialText.text = LocalizationManager.Instance.GetText("hard_text");
     }
+
+
+
+private void CheckGameEnd()
+{
+    if (handPanel.transform.childCount > 0)
+    {
+        Debug.Log("GameManager.cs:CheckGameEnd - Hand still has pieces.");
+        return;
+    }
+
+    int totalSlots = gridRows * gridCols;
+    
+
+    foreach (Transform slot in gridPanel.transform)
+    {
+        if (slot.childCount == 0) return;
+
+        Piece piece = slot.GetComponentInChildren<Piece>();
+        DropSlot dropSlot = slot.GetComponent<DropSlot>();
+
+        if (piece == null || dropSlot == null) return;
+
+        if (piece.correctRow == dropSlot.slotRow && piece.correctCol == dropSlot.slotCol)
+            correctCount++;
+    }
+
+    if (correctCount < totalSlots)
+    {
+        Debug.Log("GameManager.cs: Not all pieces are correct.");
+        return;
+    }
+
+    Debug.Log("GameManager.cs: All placements correct. Game completed.");
+    isGameRunning = false;
+
+    string finalTime = FormatTime(elapsedTime);
+    float totalTime = elapsedTime + penaltyTimeTotal;
+    string totalTimeStr = totalTime.ToString("0.000");
+
+    Debug.Log("Final Time: " + finalTime);
+    Debug.Log("Penalty Time: " + penaltyTimeTotal.ToString("0.000") + " seconds");
+
+    timerText.text += $"\nPenalty: {penaltyTimeTotal:0.000} seconds";
+
+    if (gridRows == 3)
+    {
+        PlayerPrefs.SetInt("EasyComplete", 1);
+        PlayerPrefs.SetString("EasyTime", totalTimeStr);
+    }
+    else if (gridRows == 4)
+    {
+        PlayerPrefs.SetInt("MediumComplete", 1);
+        PlayerPrefs.SetString("MediumTime", totalTimeStr);
+    }
+    else if (gridRows == 5)
+    {
+        PlayerPrefs.SetString("HardTime", totalTimeStr);
+    }
+
+    string difficulty = gridRows == 3 ? "Easy" : gridRows == 4 ? "Medium" : "Hard";
+
+    PlayerPrefs.SetString("PendingTime", totalTimeStr);
+    PlayerPrefs.SetString("PendingName", "Player"); // update later with input
+    PlayerPrefs.SetString("PendingDifficulty", difficulty);
+    PlayerPrefs.SetString("PendingPenalty", penaltyTimeTotal.ToString("0.000"));
+    PlayerPrefs.SetString("PendingScore", (1000f / totalTime).ToString("0.000")); // basic score formula
+    PlayerPrefs.SetString("PendingImage", "");
+    PlayerPrefs.SetInt("HasPendingSubmission", 1);
+
+    UpdateButtonStates();
+    ResetToMenu();
+}
+
+private void ResetToMenu()
+{
+    elapsedTime = 0f;
+    penaltyTimeTotal = 0f;
+    gameCanvas.SetActive(false);
+    menuCanvas.SetActive(false);
+    showWinScreen = true;
+
+    float baseScore = gridRows == 3 ? 1000 : gridRows == 4 ? 2500 : 5000;
+    float penalty = penaltyTimeTotal * (gridRows == 3 ? 50 : gridRows == 4 ? 100 : 200);
+    float speedPenalty = elapsedTime <= 10 ? elapsedTime * 1000 : 10000 + ((elapsedTime - 10f) * 500);
+    float score = Mathf.Max(0f, baseScore - penalty - speedPenalty);
+
+    string difficulty = gridRows == 3 ? "Easy" : gridRows == 4 ? "Medium" : "Hard";
+    string message = LocalizationManager.Instance.GetText("congrats_text")
+        .Replace("<difficulty>", difficulty)
+        .Replace("<time>", FormatTime(elapsedTime))
+        .Replace("<penalty>", penaltyTimeTotal.ToString("0.000"))
+        .Replace("<score>", Mathf.RoundToInt(score).ToString());
+
+    tutorialText.text = message;
+    tutorialPanel.SetActive(true);
+}
 
 
 }

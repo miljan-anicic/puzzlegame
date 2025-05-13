@@ -21,11 +21,10 @@ public class DropSlot : MonoBehaviour, IDropHandler
 
         if (piece != null)
         {
-            //  Check if slot already has a child (piece)
             if (transform.childCount > 0)
             {
                 Debug.Log("Slot already occupied!");
-                return; // Do nothing, don't allow drop
+                return;
             }
 
             RectTransform pieceRect = piece.GetComponent<RectTransform>();
@@ -33,7 +32,10 @@ public class DropSlot : MonoBehaviour, IDropHandler
 
             piece.transform.SetParent(transform);
 
-            // Perfectly center piece inside slot
+            // DEBUG: Show placement info
+            Debug.Log($"Piece ({piece.correctRow},{piece.correctCol}) placed into Slot ({slotRow},{slotCol})");
+
+            // Center piece in slot
             pieceRect.anchorMin = new Vector2(0.5f, 0.5f);
             pieceRect.anchorMax = new Vector2(0.5f, 0.5f);
             pieceRect.pivot = new Vector2(0.5f, 0.5f);
@@ -44,25 +46,19 @@ public class DropSlot : MonoBehaviour, IDropHandler
             {
                 Debug.Log("Correct placement!");
                 StartCoroutine(Pulse(pieceRect, Color.green));
-
-                // Lock piece movement
                 piece.GetComponent<CanvasGroup>().blocksRaycasts = false;
-                Destroy(piece.GetComponent<Piece>());
+                piece.enabled = false;
             }
             else
             {
                 Debug.Log("Wrong placement!");
                 StartCoroutine(Pulse(pieceRect, Color.red));
-
-                // Add penalty
                 GameManager gm = FindFirstObjectByType<GameManager>();
-                if (gm != null)
-                {
-                    gm.AddPenalty();
-                }
+                if (gm != null) gm.AddPenalty();
             }
         }
     }
+
 
 
     private IEnumerator Pulse(RectTransform pieceRect, Color flashColor)

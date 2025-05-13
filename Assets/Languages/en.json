@@ -1,0 +1,48 @@
+{
+    "items": [
+        {
+            "key": "easy_text",
+            "value": "Easy: Correct slots light up green, wrong ones red. Press Space to start."
+        },
+        {
+            "key": "medium_text",
+            "value": "Medium: Only wrong moves are highlighted. Press Space to begin."
+        },
+        {
+            "key": "hard_text",
+            "value": "Hard: No visual feedback. Use rotations wisely. Press Space to start."
+        },
+        {
+            "key": "game_completed",
+            "value": "Game Completed!"
+        },
+        {
+            "key": "final_time",
+            "value": "Final Time: "
+        },
+        {
+            "key": "penalty_time",
+            "value": "Penalty: {0:0.000} seconds"
+        },
+        {
+            "key": "title_text",
+            "value": "My Puzzle Game"
+        },
+        {
+            "key": "easy_btn",
+            "value": "Easy"
+        },
+        {
+            "key": "medium_btn",
+            "value": "Medium"
+        },
+        {
+            "key": "hard_btn",
+            "value": "Hard"
+        },
+        {
+            "key": "congrats_text",
+            "value": "Congratulations on beating the <difficulty> puzzle!\nYour time was <time>, penalty was <penalty>, and your score was <score>."
+        }
+    ]
+}
